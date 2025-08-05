@@ -1058,5 +1058,5 @@ vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { noremap = true, silent = true
 vim.opt.clipboard = 'unnamedplus'
 
 require 'custom.lsp'
-
 require 'custom.mappings'
+require 'custom.force_edit'

@@ -4,6 +4,7 @@
 -- See the kickstart.nvim README for more information
 return {
   require 'custom.plugins.catppuccin',
+  require 'custom.plugins.telescope_config',
   { 'neovim/nvim-lspconfig' },
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
