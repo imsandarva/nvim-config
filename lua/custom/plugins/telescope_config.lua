@@ -14,13 +14,17 @@ return {
           },
         },
       },
+      pickers = {
+        -- Always use fd for file search
+        find_files = {
+          find_command = { 'fd', '--type', 'f', '--hidden', '--follow', '--exclude', '.git' },
+        },
+      },
     }
 
-    -- Auto refresh file list after writing or changing directory
-    vim.api.nvim_create_autocmd({ 'BufWritePost', 'DirChanged' }, {
-      callback = function()
-        require('telescope.builtin').find_files { hidden = true, no_ignore = true }
-      end,
-    })
+    -- Keymap for refreshing files manually (optional)
+    local builtin = require 'telescope.builtin'
+    vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles (fd)' })
+    vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
   end,
 }
