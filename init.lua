@@ -615,10 +615,7 @@ require('lazy').setup({
           if vim.lsp.inlay_hint then
             if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
               map('<leader>th', function()
-                vim.lsp.inlay_hint.enable(
-                  not vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf }),
-                  { bufnr = event.buf }
-                )
+                vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }, { bufnr = event.buf })
               end, '[T]oggle Inlay [H]ints')
             end
           end
@@ -884,6 +881,7 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
+  { import = 'kickstart.plugins' },
   { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-📌-plugin-spec`
