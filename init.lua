@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -949,5 +949,15 @@ vim.keymap.set('n', '<A-k>', ':m .-2<CR>==', { noremap = true, silent = true })
 vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
 vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { noremap = true, silent = true })
 
+-- Reliable Neo-tree toggle on <C-b>
+vim.keymap.set('n', '<C-b>', function()
+  local ok, neo = pcall(require, 'neo-tree.command')
+  if ok and neo and neo.execute then
+    neo.execute { toggle = true }
+  else
+    -- fallback if neo-tree is not available yet
+    vim.cmd 'Neotree toggle'
+  end
+end, { desc = 'Toggle NeoTree', noremap = true, silent = true })
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

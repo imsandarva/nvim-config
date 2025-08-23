@@ -7,12 +7,9 @@ return {
   dependencies = {
     'nvim-lua/plenary.nvim',
     'MunifTanjim/nui.nvim',
+    'nvim-tree/nvim-web-devicons', --  For file  and folder icons
   },
   cmd = 'Neotree',
-  keys = {
-    { '\\', ':Neotree reveal<CR>', desc = 'NeoTree reveal', silent = true },
-    { '<C-b>', ':Neotree toggle<CR>', desc = 'Toggle NeoTree', silent = true },
-  },
   opts = {
     filesystem = {
       filtered_items = {
