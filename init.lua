@@ -711,8 +711,6 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
-        ensure_installed = { 'pyright' },
-        automatic_installation = true,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
@@ -970,3 +968,15 @@ vim.diagnostic.config {
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
+
+-- Force LSP to start for Python files
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'python',
+  callback = function()
+    vim.lsp.start {
+      name = 'pyright',
+      cmd = { '/home/sandarva3/.local/share/nvim/mason/bin/pyright-langserver', '--stdio' },
+      root_dir = vim.fn.getcwd(),
+    }
+  end,
+})
