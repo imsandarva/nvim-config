@@ -717,7 +717,7 @@ require('lazy').setup({
 
       require('mason-lspconfig').setup {
         ensure_installed = { 'pyright' }, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
-        automatic_installation = false,
+        automatic_installation = true,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
@@ -959,5 +959,6 @@ vim.keymap.set('n', '<C-b>', function()
     vim.cmd 'Neotree toggle'
   end
 end, { desc = 'Toggle NeoTree', noremap = true, silent = true })
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
