@@ -9,15 +9,13 @@ return {
     telescope.setup {
       defaults = {
         mappings = {
-          i = {
-            ['<esc>'] = actions.close,
-          },
+          i = { ['<esc>'] = actions.close },
         },
       },
       pickers = {
-        -- Always use fd for file search
         find_files = {
           find_command = { 'fd', '--type', 'f', '--hidden', '--follow', '--exclude', '.git' },
+          cache_picker = false, --  disables result caching
         },
       },
     }
