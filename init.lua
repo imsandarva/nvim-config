@@ -372,7 +372,6 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -763,26 +762,6 @@ require('lazy').setup({
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
-      },
-    },
-  },
-
-  {
-    lazy = false,
-    version = '1.*',
-    dependencies = 'rafamadriz/friendly-snippets', -- optional for snippet support
-    opts = {
-
-      keymap = {
-        preset = 'default',
-        ['<CR>'] = { 'accept', 'fallback' }, -- ✅ confirm completion with Enter
-        ['<Tab>'] = { 'select_next', 'fallback' },
-        ['<S-Tab>'] = { 'select_prev', 'fallback' },
-      },
-
-      highlight = {
-        -- Use nvim-cmp's highlight groups for consistency (optional)
-        use_nvim_cmp_as_default = true,
       },
     },
   },
