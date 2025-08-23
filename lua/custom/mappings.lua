@@ -15,4 +15,6 @@ vim.keymap.set('n', '_x', 'x', { noremap = true })
 vim.keymap.set('v', 'd', '"_d', { noremap = true })
 vim.keymap.set('v', '_d', 'd', { noremap = true })
 
-vim.keymap.set('n', '<C-b>', ':Neotree toggle<CR>', { desc = 'Toggle NeoTree', silent = true })
+vim.keymap.set('n', '<C-b>', function()
+  vim.cmd 'Neotree toggle filesystem reveal'
+end, { desc = 'Toggle NeoTree', silent = true })
