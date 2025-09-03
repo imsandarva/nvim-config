@@ -243,7 +243,6 @@ require('lazy').setup({
   
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
-  { import = 'custom.plugins' },
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -375,7 +374,10 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
+<<<<<<< HEAD
       -- Note: nvim-web-devicons is now loaded separately in custom plugins
+=======
+>>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -409,6 +411,12 @@ require('lazy').setup({
         --   },
         -- },
         -- pickers = {}
+        pickers = {
+          find_files = {
+            no_ignore = true, -- Always include .gitignore'd files
+            hidden = true, -- Optionally include hidden files
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -484,9 +492,6 @@ require('lazy').setup({
 
       -- Useful status updates for LSP.
       { 'j-hui/fidget.nvim', opts = {} },
-
-      -- Allows extra capabilities provided by blink.cmp
-      'saghen/blink.cmp',
     },
     config = function()
       -- Brief aside: **What is LSP?**
@@ -614,16 +619,21 @@ require('lazy').setup({
           -- code, if the language server you are using supports them
           --
           -- This may be unwanted, since they displace some of your code
-          if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
-            map('<leader>th', function()
-              vim.lsp.inlay_hint.enable(
-                not vim.lsp.inlay_hint.is_enabled(event.buf), -- check status for this buf
-                { bufnr = event.buf } -- pass bufnr option correctly
-              )
-            end, '[T]oggle Inlay [H]ints')
+          if vim.lsp.inlay_hint then
+            if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
+              map('<leader>th', function()
+                vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }, { bufnr = event.buf })
+              end, '[T]oggle Inlay [H]ints')
+            end
           end
         end,
       })
+
+      -- LSP servers and clients are able to communicate to each other what features they support.
+      --  By default, Neovim doesn't support everything that is in the LSP specification.
+      --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities, so we create
+      --  new capabilities with nvim cmp, and then broadcast that to the servers.
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
 
       -- Diagnostic Config
       -- See :help vim.diagnostic.Opts
@@ -633,7 +643,7 @@ require('lazy').setup({
         underline = { severity = vim.diagnostic.severity.ERROR },
         signs = vim.g.have_nerd_font and {
           text = {
-            [vim.diagnostic.severity.ERROR] = '󰅚 ',
+            [vim.diagnostic.severity.ERROR] = '󰅙 ',
             [vim.diagnostic.severity.WARN] = '󰀪 ',
             [vim.diagnostic.severity.INFO] = '󰋽 ',
             [vim.diagnostic.severity.HINT] = '󰌶 ',
@@ -654,12 +664,6 @@ require('lazy').setup({
         },
       }
 
-      -- LSP servers and clients are able to communicate to each other what features they support.
-      --  By default, Neovim doesn't support everything that is in the LSP specification.
-      --  When you add blink.cmp, luasnip, etc. Neovim now has *more* capabilities.
-      --  So, we create new capabilities with blink.cmp, and then broadcast that to the servers.
-      local capabilities = require('blink.cmp').get_lsp_capabilities()
-
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --
@@ -670,30 +674,24 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
-        --
-
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                autoSearchPaths = true,
+                useLibraryCodeForTypes = true,
+                diagnosticMode = 'workspace',
+                typeCheckingMode = 'basic',
+              },
+            },
+          },
+        },
         lua_ls = {
-          -- cmd = { ... },
-          -- filetypes = { ... },
-          -- capabilities = {},
           settings = {
             Lua = {
               completion = {
                 callSnippet = 'Replace',
               },
-              -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-              -- diagnostics = { disable = { 'missing-fields' } },
             },
           },
         },
@@ -715,18 +713,19 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'pyright', -- Python LSP
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
+<<<<<<< HEAD
         ensure_installed = { 'pyright' },
         automatic_installation = true,
+=======
+>>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             
             -- Add workspace refresh capabilities for better file tracking
@@ -822,6 +821,7 @@ require('lazy').setup({
     },
   },
 
+<<<<<<< HEAD
   {
     'saghen/blink.cmp',
     lazy = false, -- blink.cmp recommends not lazy-loading
@@ -855,6 +855,8 @@ require('lazy').setup({
     },
   },
 
+=======
+>>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
@@ -966,9 +968,10 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'kickstart.plugins' },
+  { import = 'custom.plugins' },
   --
-  -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
+  -- For additional information with loading, sourcing and examples see `:help lazy.nvim-📌-plugin-spec`
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
@@ -994,18 +997,7 @@ require('lazy').setup({
   },
 })
 
--- The line beneath this is called `modeline`. See `:help modeline`
--- vim: ts=2 sts=2 sw=2 et
-
-require('telescope').setup {
-  pickers = {
-    find_files = {
-      no_ignore = true, -- Always include .gitignore'd files
-      hidden = true, -- Optionally include hidden files
-    },
-  },
-}
-
+-- Custom keymaps and configurations
 -- File switching with <Ctrl-p>
 vim.keymap.set('n', '<C-p>', ':Telescope find_files<CR>', { noremap = true, silent = true })
 
@@ -1044,8 +1036,32 @@ vim.keymap.set('n', '<A-k>', ':m .-2<CR>==', { noremap = true, silent = true })
 vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
 vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { noremap = true, silent = true })
 
-vim.opt.clipboard = 'unnamedplus'
+-- Reliable Nvim-tree toggle on <C-b>
+vim.keymap.set('n', '<C-b>', ':NvimTreeToggle<CR>', { desc = 'Toggle NvimTree', noremap = true, silent = true })
+-- The line beneath this is called `modeline`. See `:help modeline`
+-- vim: ts=2 sts=2 sw=2 et
+--
+--
+--
+--
+--
+---- Enhanced diagnostic configuration
+vim.diagnostic.config {
+  virtual_text = {
+    prefix = '●',
+    source = 'if_many',
+  },
+  float = {
+    source = 'always',
+    border = 'rounded',
+  },
+  signs = true,
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+}
 
+<<<<<<< HEAD
 require 'custom.lsp'
 require 'custom.mappings'
 require 'custom.force_edit'
@@ -1058,3 +1074,21 @@ health.setup_auto_health_check()
 vim.keymap.set('n', '<leader>hh', health.full_health_check, { desc = '[H]ealth [H]check' })
 vim.keymap.set('n', '<leader>hl', health.check_lsp_health, { desc = '[H]ealth [L]SP check' })
 vim.keymap.set('n', '<leader>hc', health.check_completion_health, { desc = '[H]ealth [C]ompletion check' })
+=======
+-- Show diagnostics on hover
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
+vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
+vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
+
+-- Force LSP to start for Python files
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'python',
+  callback = function()
+    vim.lsp.start {
+      name = 'pyright',
+      cmd = { '/home/sandarva3/.local/share/nvim/mason/bin/pyright-langserver', '--stdio' },
+      root_dir = vim.fn.getcwd(),
+    }
+  end,
+})
+>>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
