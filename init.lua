@@ -91,7 +91,10 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
+
+-- Ensure terminal can display icons properly
+vim.opt.termguicolors = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -238,6 +241,9 @@ vim.opt.rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
+  -- Load nvim-web-devicons FIRST for file icons
+  { 'nvim-tree/nvim-web-devicons', lazy = false, priority = 1000 },
+  
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
   { import = 'custom.plugins' },
@@ -372,7 +378,7 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      -- Note: nvim-web-devicons is now loaded separately in custom plugins
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -716,8 +722,8 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
-        ensure_installed = { 'pyright' }, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
-        automatic_installation = false,
+        ensure_installed = { 'pyright' },
+        automatic_installation = true,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
@@ -725,10 +731,56 @@ require('lazy').setup({
             -- by the server configuration above. Useful when disabling
             -- certain features of an LSP (for example, turning off formatting for ts_ls)
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            
+            -- Add workspace refresh capabilities for better file tracking
+            server.settings = vim.tbl_deep_extend('force', server.settings or {}, {
+              -- Enable workspace refresh for better file tracking
+              workspace = {
+                -- Refresh workspace when files change
+                refresh = true,
+                -- Watch for file system changes
+                watch = true,
+                -- Include hidden files
+                includeHidden = true,
+              },
+            })
+            
             require('lspconfig')[server_name].setup(server)
           end,
         },
       }
+      
+      -- Add workspace refresh functionality
+      local function refresh_workspace()
+        local clients = vim.lsp.get_active_clients()
+        for _, client in ipairs(clients) do
+          if client.supports_method('workspace/didChangeWatchedFiles') then
+            -- Notify LSP about workspace changes
+            client.notify('workspace/didChangeWatchedFiles', {
+              changes = {
+                {
+                  uri = vim.uri_from_bufnr(0),
+                  type = 1, -- 1 = created, 2 = changed, 3 = deleted
+                },
+              },
+            })
+          end
+        end
+      end
+      
+      -- Refresh workspace when new files are created
+      vim.api.nvim_create_autocmd('BufNewFile', {
+        callback = function()
+          vim.defer_fn(refresh_workspace, 100)
+        end,
+      })
+      
+      -- Refresh workspace when files are written
+      vim.api.nvim_create_autocmd('BufWritePost', {
+        callback = function()
+          vim.defer_fn(refresh_workspace, 100)
+        end,
+      })
     end,
   },
 
@@ -791,6 +843,17 @@ require('lazy').setup({
         -- Use nvim-cmp's highlight groups for consistency (optional)
         use_nvim_cmp_as_default = true,
       },
+      
+      -- Add LSP server management to prevent timeouts
+      lsp = {
+        -- Enable automatic LSP server restart on timeout
+        auto_restart = true,
+        -- Restart LSP servers when they become unresponsive
+        restart_on_timeout = true,
+        -- Timeout in milliseconds before considering LSP server unresponsive
+        timeout = 30000, -- 30 seconds
+      },
+      
       -- Add other opts from blink.cmp docs if needed, e.g., sources, keymaps
     },
   },
@@ -898,6 +961,9 @@ require('lazy').setup({
   -- require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  
+  -- Load nvim-web-devicons for file icons
+  -- { 'nvim-tree/nvim-web-devicons', lazy = false },
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
@@ -986,3 +1052,12 @@ vim.opt.clipboard = 'unnamedplus'
 require 'custom.lsp'
 require 'custom.mappings'
 require 'custom.force_edit'
+
+-- Load and setup health monitoring
+local health = require('custom.health')
+health.setup_auto_health_check()
+
+-- Add health check keybinding
+vim.keymap.set('n', '<leader>hh', health.full_health_check, { desc = '[H]ealth [H]check' })
+vim.keymap.set('n', '<leader>hl', health.check_lsp_health, { desc = '[H]ealth [L]SP check' })
+vim.keymap.set('n', '<leader>hc', health.check_completion_health, { desc = '[H]ealth [C]ompletion check' })
