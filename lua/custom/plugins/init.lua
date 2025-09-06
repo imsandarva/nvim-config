@@ -38,6 +38,13 @@ return {
           autocomplete = { cmp.TriggerEvent.TextChanged },
           keyword_length = 1,
         },
+        -- Make completion snappy and responsive
+        performance = {
+          debounce = 0,
+          throttle = 0,
+          fetching_timeout = 80,
+        },
+        preselect = cmp.PreselectMode.Item,
         snippet = {
           expand = function(args)
             luasnip.lsp_expand(args.body)
@@ -65,12 +72,40 @@ return {
             end
           end, { 'i', 's' }),
         },
-        sources = {
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
-          { name = 'buffer' },
-          { name = 'path' },
+        -- Order sources: LSP first, then path/snippets, then buffer (reduced noise)
+        sources = cmp.config.sources({
+          { name = 'nvim_lsp', priority = 1000 },
+          { name = 'path', priority = 800 },
+          { name = 'luasnip', priority = 700 },
+        }, {
+          {
+            name = 'buffer',
+            keyword_length = 3,
+            priority = 250,
+            option = {
+              get_bufnrs = function()
+                local bufs = {}
+                for _, win in ipairs(vim.api.nvim_list_wins()) do
+                  bufs[vim.api.nvim_win_get_buf(win)] = true
+                end
+                return vim.tbl_keys(bufs)
+              end,
+            },
+          },
+        }),
+        sorting = {
+          priority_weight = 2,
+          comparators = {
+            cmp.config.compare.exact,
+            cmp.config.compare.score,
+            cmp.config.compare.recently_used,
+            cmp.config.compare.locality,
+            cmp.config.compare.kind,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
+          },
         },
+        experimental = { ghost_text = true },
       }
     end,
   },

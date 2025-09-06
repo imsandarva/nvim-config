@@ -722,6 +722,8 @@ require('lazy').setup({
                 typeCheckingMode = 'basic',
                 -- Enable quick auto-imports and suggestions
                 autoImportCompletions = true,
+                indexing = true,
+                logLevel = 'Error',
               },
             },
           },
