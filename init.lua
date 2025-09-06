@@ -240,6 +240,25 @@ vim.opt.rtp:prepend(lazypath)
 --    :Lazy update
 --
 -- NOTE: Here is where you install your plugins.
+--
+-- LSP request compatibility shim:
+-- Some completion sources call client.request with (method, params, callback, bufnr?)
+-- while others on newer APIs may pass (method, params, nil, callback).
+-- This small wrapper swaps the arguments if the 4th is a function to prevent
+-- 'bufnr: expected number, got function' errors without removing any features.
+do
+  local lsp = vim.lsp
+  local orig_request = lsp and lsp.Client and lsp.Client.request
+  if type(orig_request) == 'function' then
+    lsp.Client.request = function(self, method, params, handler, bufnr)
+      if type(bufnr) == 'function' and type(handler) ~= 'function' then
+        handler, bufnr = bufnr, nil
+      end
+      return orig_request(self, method, params, handler, bufnr)
+    end
+  end
+end
+
 require('lazy').setup({
   -- Load core tools
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
@@ -590,6 +609,23 @@ require('lazy').setup({
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
+          -- Normalize client:request arguments to avoid bufnr/function order issues
+          if client and type(client.request) == 'function' and not client.__request_shimmed then
+            local orig = client.request
+            client.request = function(self, method, params, handler, bufnr)
+              -- If called as (method, params, bufnr, handler)
+              if type(handler) == 'number' and type(bufnr) == 'function' then
+                handler, bufnr = bufnr, handler
+              end
+              -- If called as (method, params, nil, handler)
+              if handler == nil and type(bufnr) == 'function' then
+                handler, bufnr = bufnr, nil
+              end
+              -- If called as (method, params, handler) this is fine
+              return orig(self, method, params, handler, bufnr)
+            end
+            client.__request_shimmed = true
+          end
           if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
@@ -663,6 +699,9 @@ require('lazy').setup({
         },
       }
 
+      -- Completion UI behavior (recommended by nvim-cmp)
+      vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
+
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --
@@ -681,6 +720,8 @@ require('lazy').setup({
                 useLibraryCodeForTypes = true,
                 diagnosticMode = 'workspace',
                 typeCheckingMode = 'basic',
+                -- Enable quick auto-imports and suggestions
+                autoImportCompletions = true,
               },
             },
           },
@@ -896,6 +937,28 @@ require('lazy').setup({
 })
 
 -- Custom keymaps and configurations
+-- Patch cmp-nvim-lsp request to be compatible across Neovim versions
+vim.schedule(function()
+  local ok, source = pcall(require, 'cmp_nvim_lsp.source')
+  if ok and source and not source.__request_patched then
+    local orig_request = source._request
+    if type(orig_request) == 'function' then
+      source._request = function(self, client, method, params, callback)
+        -- Try the standard call first
+        local ok_req = pcall(function()
+          -- Use dot for existence check, colon for the actual call
+          return client.request(method, params, callback, self and self.get_bufnr and self:get_bufnr() or nil)
+        end)
+        if not ok_req then
+          -- Fallback: use buf_request which always takes bufnr first
+          pcall(vim.lsp.buf_request, 0, method, params, callback)
+        end
+      end
+      source.__request_patched = true
+    end
+  end
+end)
+
 -- File switching with <Ctrl-p>
 vim.keymap.set('n', '<C-p>', ':Telescope find_files<CR>', { noremap = true, silent = true })
 

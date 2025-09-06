@@ -32,9 +32,12 @@ return {
       local luasnip = require 'luasnip'
 
       cmp.setup {
-        -- Disable automatic completion to avoid TextChangedI issues.
-        -- Trigger completion manually (see mapping below).
-        completion = { autocomplete = false },
+        -- Re-enable automatic completion on text change for inline suggestions
+        -- Keep it simple and fast for Python editing
+        completion = {
+          autocomplete = { cmp.TriggerEvent.TextChanged },
+          keyword_length = 1,
+        },
         snippet = {
           expand = function(args)
             luasnip.lsp_expand(args.body)
