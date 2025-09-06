@@ -32,12 +32,16 @@ return {
       local luasnip = require 'luasnip'
 
       cmp.setup {
+        -- Disable automatic completion to avoid TextChangedI issues.
+        -- Trigger completion manually (see mapping below).
+        completion = { autocomplete = false },
         snippet = {
           expand = function(args)
             luasnip.lsp_expand(args.body)
           end,
         },
         mapping = cmp.mapping.preset.insert {
+          ['<C-Space>'] = cmp.mapping.complete(),
           ['<CR>'] = cmp.mapping.confirm { select = true },
           ['<Tab>'] = cmp.mapping(function(fallback)
             if cmp.visible() then

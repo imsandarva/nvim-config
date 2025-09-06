@@ -631,7 +631,8 @@ require('lazy').setup({
       --  By default, Neovim doesn't support everything that is in the LSP specification.
       --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities, so we create
       --  new capabilities with nvim cmp, and then broadcast that to the servers.
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      -- Use cmp-nvim-lsp capabilities for better completion integration
+      local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
       -- Diagnostic Config
       -- See :help vim.diagnostic.Opts
