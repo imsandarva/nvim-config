@@ -24,21 +24,23 @@ end
 
 -- Check completion provider status
 function M.check_completion_health()
-  local has_cmp = pcall(require, 'blink.cmp')
-  if not has_cmp then
-    vim.notify('blink.cmp is not available', vim.log.levels.ERROR)
-    return false
-  end
-  
-  -- Check if completion is working
-  local ok, cmp = pcall(require, 'blink.cmp')
-  if ok then
-    vim.notify('blink.cmp is loaded and should be working', vim.log.levels.INFO)
+  -- Prefer nvim-cmp if present; otherwise check for minimal completion presence
+  local ok_cmp, _ = pcall(require, 'cmp')
+  if ok_cmp then
+    vim.notify('nvim-cmp is available', vim.log.levels.INFO)
     return true
-  else
-    vim.notify('Failed to load blink.cmp', vim.log.levels.ERROR)
-    return false
   end
+
+  -- As a fallback, validate that LSP completion capability exists on any client
+  for _, client in ipairs(vim.lsp.get_active_clients()) do
+    if client.server_capabilities and client.server_capabilities.completionProvider then
+      vim.notify('LSP completion is available via ' .. client.name, vim.log.levels.INFO)
+      return true
+    end
+  end
+
+  vim.notify('No completion provider detected (nvim-cmp or LSP)', vim.log.levels.WARN)
+  return false
 end
 
 -- Comprehensive health check

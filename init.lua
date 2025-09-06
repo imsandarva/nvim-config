@@ -92,12 +92,9 @@ vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
-<<<<<<< HEAD
 
--- Ensure terminal can display icons properly
+-- Ensure terminal can display icons and true colors properly
 vim.opt.termguicolors = true
-=======
->>>>>>> d95d97339cb2d0f471a17e6899c0b88e625936a5
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -244,9 +241,7 @@ vim.opt.rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
-  -- Load nvim-web-devicons FIRST for file icons
-  { 'nvim-tree/nvim-web-devicons', lazy = false, priority = 1000 },
-  
+  -- Load core tools
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
@@ -380,14 +375,7 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-<<<<<<< HEAD
-      -- Note: nvim-web-devicons is now loaded separately in custom plugins
-=======
-<<<<<<< HEAD
-      -- Note: nvim-web-devicons is now loaded separately in custom plugins
-=======
->>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
->>>>>>> d95d97339cb2d0f471a17e6899c0b88e625936a5
+      -- Note: nvim-web-devicons is loaded via `custom.plugins.web-devicons`.
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -728,70 +716,17 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
-<<<<<<< HEAD
         ensure_installed = { 'pyright' },
         automatic_installation = true,
-=======
-<<<<<<< HEAD
-        ensure_installed = { 'pyright' },
-        automatic_installation = true,
-=======
->>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
->>>>>>> d95d97339cb2d0f471a17e6899c0b88e625936a5
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            
-            -- Add workspace refresh capabilities for better file tracking
-            server.settings = vim.tbl_deep_extend('force', server.settings or {}, {
-              -- Enable workspace refresh for better file tracking
-              workspace = {
-                -- Refresh workspace when files change
-                refresh = true,
-                -- Watch for file system changes
-                watch = true,
-                -- Include hidden files
-                includeHidden = true,
-              },
-            })
-            
+
             require('lspconfig')[server_name].setup(server)
           end,
         },
       }
-      
-      -- Add workspace refresh functionality
-      local function refresh_workspace()
-        local clients = vim.lsp.get_active_clients()
-        for _, client in ipairs(clients) do
-          if client.supports_method('workspace/didChangeWatchedFiles') then
-            -- Notify LSP about workspace changes
-            client.notify('workspace/didChangeWatchedFiles', {
-              changes = {
-                {
-                  uri = vim.uri_from_bufnr(0),
-                  type = 1, -- 1 = created, 2 = changed, 3 = deleted
-                },
-              },
-            })
-          end
-        end
-      end
-      
-      -- Refresh workspace when new files are created
-      vim.api.nvim_create_autocmd('BufNewFile', {
-        callback = function()
-          vim.defer_fn(refresh_workspace, 100)
-        end,
-      })
-      
-      -- Refresh workspace when files are written
-      vim.api.nvim_create_autocmd('BufWritePost', {
-        callback = function()
-          vim.defer_fn(refresh_workspace, 100)
-        end,
-      })
     end,
   },
 
@@ -836,42 +771,6 @@ require('lazy').setup({
     },
   },
 
-<<<<<<< HEAD
-  {
-    'saghen/blink.cmp',
-    lazy = false, -- blink.cmp recommends not lazy-loading
-    version = '1.*',
-    dependencies = 'rafamadriz/friendly-snippets', -- optional for snippet support
-    opts = {
-
-      keymap = {
-        preset = 'default',
-        ['<CR>'] = { 'accept', 'fallback' }, -- ✅ confirm completion with Enter
-        ['<Tab>'] = { 'select_next', 'fallback' },
-        ['<S-Tab>'] = { 'select_prev', 'fallback' },
-      },
-
-      highlight = {
-        -- Use nvim-cmp's highlight groups for consistency (optional)
-        use_nvim_cmp_as_default = true,
-      },
-      
-      -- Add LSP server management to prevent timeouts
-      lsp = {
-        -- Enable automatic LSP server restart on timeout
-        auto_restart = true,
-        -- Restart LSP servers when they become unresponsive
-        restart_on_timeout = true,
-        -- Timeout in milliseconds before considering LSP server unresponsive
-        timeout = 30000, -- 30 seconds
-      },
-      
-      -- Add other opts from blink.cmp docs if needed, e.g., sources, keymaps
-    },
-  },
-
-=======
->>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
@@ -1076,8 +975,6 @@ vim.diagnostic.config {
   severity_sort = true,
 }
 
-<<<<<<< HEAD
-require 'custom.lsp'
 require 'custom.mappings'
 require 'custom.force_edit'
 
@@ -1085,28 +982,12 @@ require 'custom.force_edit'
 local health = require('custom.health')
 health.setup_auto_health_check()
 
--- Add health check keybinding
+-- Add health check keybindings
 vim.keymap.set('n', '<leader>hh', health.full_health_check, { desc = '[H]ealth [H]check' })
 vim.keymap.set('n', '<leader>hl', health.check_lsp_health, { desc = '[H]ealth [L]SP check' })
 vim.keymap.set('n', '<leader>hc', health.check_completion_health, { desc = '[H]ealth [C]ompletion check' })
-<<<<<<< HEAD
-=======
-=======
 -- Show diagnostics on hover
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
 
--- Force LSP to start for Python files
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = 'python',
-  callback = function()
-    vim.lsp.start {
-      name = 'pyright',
-      cmd = { '/home/sandarva3/.local/share/nvim/mason/bin/pyright-langserver', '--stdio' },
-      root_dir = vim.fn.getcwd(),
-    }
-  end,
-})
->>>>>>> da1a9ed74d854311340f67b78e033506cde684d1
->>>>>>> d95d97339cb2d0f471a17e6899c0b88e625936a5

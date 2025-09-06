@@ -4,16 +4,11 @@
 -- See the kickstart.nvim README for more information
 return {
   -- Load web devicons first (required for file icons)
-<<<<<<< HEAD
-  { 'nvim-tree/nvim-web-devicons', lazy = false, priority = 1000 },
-=======
   require 'custom.plugins.web-devicons',
->>>>>>> d95d97339cb2d0f471a17e6899c0b88e625936a5
   
   require 'custom.plugins.catppuccin',
   require 'custom.plugins.nvim-tree',
   require 'custom.plugins.telescope_config',
-  require 'custom.plugins.nvim-tree',
   { 'neovim/nvim-lspconfig' },
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
