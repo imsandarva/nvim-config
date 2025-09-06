@@ -79,9 +79,10 @@ return {
       cmp.register_source('py_import', py_import_source.new())
 
       cmp.setup {
+        -- Fast and simple: trigger immediately, minimal work per keystroke
         completion = {
           autocomplete = { cmp.TriggerEvent.TextChanged },
-          keyword_length = 1,
+          keyword_length = 0,
         },
         preselect = cmp.PreselectMode.Item,
         snippet = {
@@ -111,9 +112,10 @@ return {
             end
           end, { 'i', 's' }),
         },
+        -- Keep sources minimal and ordered for relevance
         sources = cmp.config.sources({
-          { name = 'nvim_lsp', priority = 1000, keyword_length = 1 },
-          { name = 'path', priority = 800, keyword_length = 1 },
+          { name = 'nvim_lsp', priority = 1000, keyword_length = 0 },
+          { name = 'path', priority = 800, keyword_length = 0 },
           { name = 'luasnip', priority = 700 },
         }, {
           {
@@ -142,11 +144,12 @@ return {
         experimental = { ghost_text = true },
       }
 
+      -- Python: prioritize import source and immediate path/lsp results
       cmp.setup.filetype('python', {
         sources = cmp.config.sources({
           { name = 'py_import', priority = 1200, keyword_length = 0 },
-          { name = 'nvim_lsp', priority = 1000, keyword_length = 1 },
-          { name = 'path', priority = 800, keyword_length = 1 },
+          { name = 'nvim_lsp', priority = 1000, keyword_length = 0 },
+          { name = 'path', priority = 800, keyword_length = 0 },
           { name = 'luasnip', priority = 700 },
         }, {
           {
