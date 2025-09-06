@@ -1,14 +1,9 @@
--- You can add your own plugins here or in other files in this directory!
---  I promise not to create any merge conflicts in this directory :)
---
--- See the kickstart.nvim README for more information
 return {
-  -- Load web devicons first (required for file icons)
   require 'custom.plugins.web-devicons',
-  
   require 'custom.plugins.catppuccin',
   require 'custom.plugins.nvim-tree',
   require 'custom.plugins.telescope_config',
+
   { 'neovim/nvim-lspconfig' },
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
@@ -20,29 +15,73 @@ return {
   {
     'hrsh7th/nvim-cmp',
     dependencies = {
-      'hrsh7th/cmp-nvim-lsp', -- LSP completions
-      'hrsh7th/cmp-buffer', -- buffer words
-      'hrsh7th/cmp-path', -- filesystem paths
-      'hrsh7th/cmp-cmdline', -- command line completions
-      'L3MON4D3/LuaSnip', -- snippets
-      'saadparwaiz1/cmp_luasnip', -- connect cmp + snippets
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-path',
+      'hrsh7th/cmp-cmdline',
+      'L3MON4D3/LuaSnip',
+      'saadparwaiz1/cmp_luasnip',
     },
     config = function()
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
 
+      -- Custom source for Python relative imports
+      local py_import_source = {}
+      py_import_source.new = function()
+        return setmetatable({}, { __index = py_import_source })
+      end
+      function py_import_source:is_available()
+        return vim.bo.filetype == 'python'
+      end
+      function py_import_source:get_debug_name()
+        return 'py_import'
+      end
+      function py_import_source:complete(request, callback)
+        local line = request.context.cursor_before_line
+        local mod = line:match('^%s*from%s+([%._%w]*)$')
+        if not mod then
+          return callback()
+        end
+
+        local cwd = vim.fn.expand '%:p:h'
+        local leading = mod:match('^(%.*)') or ''
+        local rest = mod:sub(#leading + 1)
+        local base = cwd
+        if #leading > 1 then
+          for _ = 2, #leading do
+            base = vim.fn.fnamemodify(base, ':h')
+          end
+        end
+        local rel = rest:gsub('^%.', ''):gsub('%.', '/')
+        local target = (rel ~= '' and (base .. '/' .. rel) or base)
+        if vim.fn.isdirectory(target) == 0 then
+          return callback()
+        end
+
+        local names = vim.fn.readdir(target)
+        local items = {}
+        for _, name in ipairs(names) do
+          if name:sub(1, 1) ~= '.' then
+            local full = target .. '/' .. name
+            if vim.fn.isdirectory(full) == 1 then
+              table.insert(items, { label = name })
+            elseif name:sub(-3) == '.py' and name ~= '__init__.py' then
+              table.insert(items, { label = name:sub(1, -4) })
+            end
+          end
+        end
+        table.sort(items, function(a, b)
+          return a.label < b.label
+        end)
+        callback(items)
+      end
+      cmp.register_source('py_import', py_import_source.new())
+
       cmp.setup {
-        -- Re-enable automatic completion on text change for inline suggestions
-        -- Keep it simple and fast for Python editing
         completion = {
           autocomplete = { cmp.TriggerEvent.TextChanged },
           keyword_length = 1,
-        },
-        -- Make completion snappy and responsive
-        performance = {
-          debounce = 0,
-          throttle = 0,
-          fetching_timeout = 80,
         },
         preselect = cmp.PreselectMode.Item,
         snippet = {
@@ -72,23 +111,18 @@ return {
             end
           end, { 'i', 's' }),
         },
-        -- Order sources: LSP first, then path/snippets, then buffer (reduced noise)
         sources = cmp.config.sources({
-          { name = 'nvim_lsp', priority = 1000 },
-          { name = 'path', priority = 800 },
+          { name = 'nvim_lsp', priority = 1000, keyword_length = 1 },
+          { name = 'path', priority = 800, keyword_length = 1 },
           { name = 'luasnip', priority = 700 },
         }, {
           {
             name = 'buffer',
-            keyword_length = 3,
+            keyword_length = 2,
             priority = 250,
             option = {
               get_bufnrs = function()
-                local bufs = {}
-                for _, win in ipairs(vim.api.nvim_list_wins()) do
-                  bufs[vim.api.nvim_win_get_buf(win)] = true
-                end
-                return vim.tbl_keys(bufs)
+                return { vim.api.nvim_get_current_buf() }
               end,
             },
           },
@@ -107,6 +141,26 @@ return {
         },
         experimental = { ghost_text = true },
       }
+
+      cmp.setup.filetype('python', {
+        sources = cmp.config.sources({
+          { name = 'py_import', priority = 1200, keyword_length = 0 },
+          { name = 'nvim_lsp', priority = 1000, keyword_length = 1 },
+          { name = 'path', priority = 800, keyword_length = 1 },
+          { name = 'luasnip', priority = 700 },
+        }, {
+          {
+            name = 'buffer',
+            keyword_length = 2,
+            priority = 250,
+            option = {
+              get_bufnrs = function()
+                return { vim.api.nvim_get_current_buf() }
+              end,
+            },
+          },
+        }),
+      })
     end,
   },
 }

@@ -700,7 +700,7 @@ require('lazy').setup({
       }
 
       -- Completion UI behavior (recommended by nvim-cmp)
-      vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
+      vim.opt.completeopt = { 'menu', 'menuone' }
 
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
