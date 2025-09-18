@@ -21,7 +21,7 @@ return {
       filesystem_watchers = { enable = true, debounce_delay = 50 },
 
       -- Git indicators
-      git = { enable = true, ignore = false, show_on_dirs = true, show_on_files = true, timeout = 400 },
+      git = { enable = true, ignore = false, show_on_dirs = true, timeout = 400 },
 
       -- Basic view settings
       view = { adaptive_size = true, width = 30, side = 'left', number = false, relativenumber = false, signcolumn = 'yes' },

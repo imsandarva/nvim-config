@@ -712,30 +712,74 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        pyright = {
+        jedi_language_server = {
           settings = {
-            python = {
-              analysis = {
-                autoSearchPaths = true,
-                useLibraryCodeForTypes = true,
-                diagnosticMode = 'workspace',
-                typeCheckingMode = 'basic',
-                autoImportCompletions = true,
-                indexing = true,
-                logLevel = 'Error',
-                autoFormatStrings = true,
-                stubPath = '',
-                typeCheckingMode = 'basic',
-              },
+            jedi = {
+              enable = true,
+              autoImportModules = { 'numpy', 'pandas', 'matplotlib', 'sklearn', 'requests', 'flask', 'django' },
               completion = {
+                enabled = true,
                 disableSnippets = false,
+                resolveEagerly = 0,
+                includeParams = true,
+                includeClassObjects = true,
+                includeFunctionObjects = true,
+                includeImportStatements = true,
+                includeKeywords = true,
+                includeFlowControlKeywords = true,
+                includeClassKeywords = true,
+                includeImportKeywords = true,
+                includeBuiltins = true,
+                includeCallSignatures = true,
+                includeClassSignatures = true,
+                includeFunctionSignatures = true,
+                includeImportSignatures = true,
+                includeKeywordSignatures = true,
+                includeBuiltinSignatures = true,
+                includeCallSignatures = true,
+                includeClassSignatures = true,
+                includeFunctionSignatures = true,
+                includeImportSignatures = true,
+                includeKeywordSignatures = true,
+                includeBuiltinSignatures = true,
+              },
+              diagnostics = {
+                enable = true,
+                didOpen = true,
+                didChange = true,
+                didSave = true,
+              },
+              hover = {
+                enable = true,
+                disableSnippets = false,
+              },
+              signatureHelp = {
+                enable = true,
+                disableSnippets = false,
+              },
+              definition = {
+                enable = true,
+                followImports = true,
+                followBuiltinImports = true,
+              },
+              references = {
+                enable = true,
+                includeDeclaration = true,
+              },
+              rename = {
+                enable = true,
+              },
+              codeAction = {
+                enable = true,
+              },
+              workspace = {
+                symbol = {
+                  enable = true,
+                  allScopes = true,
+                },
               },
             },
           },
-          on_attach = function(client, bufnr)
-            -- Enable completion triggered by <c-x><c-o>
-            vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-          end,
         },
         lua_ls = {
           settings = {
@@ -753,8 +797,8 @@ require('lazy').setup({
       require('mason-tool-installer').setup {
         ensure_installed = {
           'lua-language-server', -- for lspconfig 'lua_ls'
-          'pyright',             -- Python LSP
-          'stylua',              -- Lua formatter
+          'jedi-language-server', -- BEST Python LSP
+          'stylua',             -- Lua formatter
         },
       }
 
