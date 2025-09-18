@@ -720,13 +720,22 @@ require('lazy').setup({
                 useLibraryCodeForTypes = true,
                 diagnosticMode = 'workspace',
                 typeCheckingMode = 'basic',
-                -- Enable quick auto-imports and suggestions
                 autoImportCompletions = true,
                 indexing = true,
                 logLevel = 'Error',
+                autoFormatStrings = true,
+                stubPath = '',
+                typeCheckingMode = 'basic',
+              },
+              completion = {
+                disableSnippets = false,
               },
             },
           },
+          on_attach = function(client, bufnr)
+            -- Enable completion triggered by <c-x><c-o>
+            vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+          end,
         },
         lua_ls = {
           settings = {
@@ -749,7 +758,7 @@ require('lazy').setup({
         },
       }
 
-      -- Directly setup LSP servers with lspconfig (simple and reliable)
+      -- Setup LSP servers with proper capabilities
       for server_name, server in pairs(servers) do
         server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
         require('lspconfig')[server_name].setup(server)

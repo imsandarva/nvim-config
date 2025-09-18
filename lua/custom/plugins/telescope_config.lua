@@ -14,7 +14,8 @@ return {
       },
       pickers = {
         find_files = {
-          find_command = { 'fd', '--type', 'f', '--hidden', '--follow', '--exclude', '.git' },
+          no_ignore = true, -- Always include .gitignore'd files
+          hidden = true, -- Include hidden files
           cache_picker = false, --  disables result caching
         },
       },

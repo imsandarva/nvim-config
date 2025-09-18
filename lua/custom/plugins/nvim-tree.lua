@@ -38,7 +38,7 @@ return {
       },
 
       -- Filters
-      filters = { dotfiles = false, git_ignored = true },
+      filters = { dotfiles = false, git_ignored = false },
 
       -- Trash integration
       trash = { cmd = 'gio trash', require_confirm = true },
