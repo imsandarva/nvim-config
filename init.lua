@@ -483,7 +483,7 @@ require('lazy').setup({
     end,
   },
 
-  -- LSP Plugins
+  -- LSP and Completion Plugins
   {
     -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
     -- used for completion, annotations and signatures of Neovim apis
@@ -495,6 +495,107 @@ require('lazy').setup({
         { path = '${3rd}/luv/library', words = { 'vim%.uv' } },
       },
     },
+  },
+  -- Autocompletion
+  {
+    'hrsh7th/nvim-cmp',
+    dependencies = {
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-path',
+      'hrsh7th/cmp-cmdline',
+      'L3MON4D3/LuaSnip',
+      'saadparwaiz1/cmp_luasnip',
+    },
+    config = function()
+      local cmp = require('cmp')
+      local luasnip = require('luasnip')
+
+      cmp.setup({
+        -- Fast and responsive completion
+        completion = {
+          autocomplete = { cmp.TriggerEvent.TextChanged },
+          keyword_length = 0,
+        },
+        preselect = cmp.PreselectMode.Item,
+        snippet = {
+          expand = function(args)
+            luasnip.lsp_expand(args.body)
+          end,
+        },
+        mapping = cmp.mapping.preset.insert({
+          ['<C-Space>'] = cmp.mapping.complete(),
+          ['<CR>'] = cmp.mapping.confirm({ select = true }),
+          ['<Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item()
+            elseif luasnip.expand_or_jumpable() then
+              luasnip.expand_or_jump()
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
+          ['<S-Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item()
+            elseif luasnip.jumpable(-1) then
+              luasnip.jump(-1)
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
+        }),
+        sources = cmp.config.sources({
+          { name = 'nvim_lsp', priority = 1000, keyword_length = 0 },
+          { name = 'path', priority = 800, keyword_length = 0 },
+          { name = 'luasnip', priority = 700 },
+        }, {
+          {
+            name = 'buffer',
+            keyword_length = 2,
+            priority = 250,
+            option = {
+              get_bufnrs = function()
+                return { vim.api.nvim_get_current_buf() }
+              end,
+            },
+          },
+        }),
+        sorting = {
+          priority_weight = 2,
+          comparators = {
+            cmp.config.compare.exact,
+            cmp.config.compare.score,
+            cmp.config.compare.recently_used,
+            cmp.config.compare.locality,
+            cmp.config.compare.kind,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
+          },
+        },
+        experimental = { ghost_text = true },
+      })
+
+      -- Python-specific completion with enhanced import support
+      cmp.setup.filetype('python', {
+        sources = cmp.config.sources({
+          { name = 'nvim_lsp', priority = 1000, keyword_length = 0 },
+          { name = 'path', priority = 800, keyword_length = 0 },
+          { name = 'luasnip', priority = 700 },
+        }, {
+          {
+            name = 'buffer',
+            keyword_length = 2,
+            priority = 250,
+            option = {
+              get_bufnrs = function()
+                return { vim.api.nvim_get_current_buf() }
+              end,
+            },
+          },
+        }),
+      })
+    end,
   },
   {
     -- Main LSP Configuration
@@ -714,6 +815,10 @@ require('lazy').setup({
       local servers = {
         pyright = {
           settings = {
+            pyright = {
+              disableLanguageServices = false,
+              disableOrganizeImports = false,
+            },
             python = {
               analysis = {
                 autoSearchPaths = true,
@@ -721,15 +826,36 @@ require('lazy').setup({
                 diagnosticMode = 'workspace',
                 typeCheckingMode = 'basic',
                 autoImportCompletions = true,
+                diagnosticSeverityOverrides = {
+                  reportMissingImports = 'warning',
+                  reportMissingTypeStubs = 'none',
+                  reportImportCycles = 'warning',
+                  reportUnusedImport = 'warning',
+                  reportUnusedClass = 'warning',
+                  reportUnusedFunction = 'warning',
+                  reportUnusedVariable = 'warning',
+                  reportDuplicateImport = 'warning',
+                },
               },
+              pythonPath = vim.fn.exepath('python3') or vim.fn.exepath('python') or 'python',
             },
           },
+          on_attach = function(client, bufnr)
+            -- Disable hover for pyright to avoid conflicts with other plugins
+            client.server_capabilities.hoverProvider = false
+          end,
         },
         lua_ls = {
           settings = {
             Lua = {
               completion = {
                 callSnippet = 'Replace',
+              },
+              diagnostics = {
+                globals = { 'vim' },
+              },
+              workspace = {
+                library = vim.api.nvim_get_runtime_file('', true),
               },
             },
           },
