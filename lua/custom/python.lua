@@ -52,17 +52,18 @@ end
 M.setup_autocommands = function()
   local python_group = vim.api.nvim_create_augroup('python_group', { clear = true })
 
-  -- Auto-format Python files on save
-  vim.api.nvim_create_autocmd('BufWritePost', {
-    pattern = '*.py',
-    group = python_group,
-    callback = function()
-      -- Only format if black is available
-      if vim.fn.executable('black') == 1 then
-        vim.cmd('silent !black ' .. vim.fn.expand('%'))
-      end
-    end,
-  })
+  -- Auto-format Python files on save - DISABLED
+  -- Manual formatting available with <leader>pb
+  -- vim.api.nvim_create_autocmd('BufWritePost', {
+  --   pattern = '*.py',
+  --   group = python_group,
+  --   callback = function()
+  --     -- Only format if black is available
+  --     if vim.fn.executable('black') == 1 then
+  --       vim.cmd('silent !black ' .. vim.fn.expand('%'))
+  --     end
+  --   end,
+  -- })
 
   -- Set Python-specific options
   vim.api.nvim_create_autocmd('FileType', {
