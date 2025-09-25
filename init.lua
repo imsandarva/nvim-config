@@ -1200,4 +1200,5 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagn
 local python_config = require('custom.python')
 python_config.setup_keybindings()
 python_config.setup_autocommands()
+python_config.disable_lsp_formatting()
 
