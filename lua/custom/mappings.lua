@@ -76,6 +76,16 @@ vim.keymap.set('n', '<leader>bd', ':bdelete<CR>', { desc = '[B]uffer [D]elete cu
 vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = '[B]uffer [N]ext' })
 vim.keymap.set('n', '<leader>bp', ':bprevious<CR>', { desc = '[B]uffer [P]revious' })
 
+-- Search and Replace in current file (VSCode-style)
+vim.keymap.set('n', '<leader>sr', function()
+  local search = vim.fn.input('Search: ')
+  if search == '' then return end
+  local replace = vim.fn.input('Replace: ')
+  if replace == '' then return end
+  -- Use substitute with confirm flag for interactive replacement
+  vim.cmd(string.format('%%s/%s/%s/gc', vim.fn.escape(search, '/'), vim.fn.escape(replace, '/')))
+end, { desc = '[S]earch and [R]eplace in file' })
+
 -- Quick file operations
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = '[W]rite file' })
 vim.keymap.set('n', '<leader>q', ':q<CR>', { desc = '[Q]uit' })
