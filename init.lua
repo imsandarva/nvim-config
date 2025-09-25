@@ -917,13 +917,28 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        python = { 'isort', 'black' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
     },
+  },
+  { -- Python linting and type checking
+    'nvimtools/none-ls.nvim',
+    dependencies = { 'nvimtools/none-ls-extras.nvim' },
+    config = function()
+      local null_ls = require('null-ls')
+      null_ls.setup({
+        sources = {
+          -- Python
+          null_ls.builtins.formatting.black,
+          null_ls.builtins.formatting.isort,
+          null_ls.builtins.diagnostics.flake8,
+          null_ls.builtins.diagnostics.mypy,
+        },
+      })
+    end,
   },
 
   { -- You can easily change to a different colorscheme.
@@ -1167,4 +1182,7 @@ vim.keymap.set('n', '<leader>hc', health.check_completion_health, { desc = '[H]e
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
+
+-- Additional Python development keybindings
+vim.keymap.set('n', '<leader>py', ':!python %<CR>', { desc = '[P]ython run current file' })
 
