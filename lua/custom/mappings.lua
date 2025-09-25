@@ -15,7 +15,7 @@ vim.keymap.set('n', '_x', 'x', { noremap = true })
 vim.keymap.set('v', 'd', '"_d', { noremap = true })
 vim.keymap.set('v', '_d', 'd', { noremap = true })
 
--- Add LSP workspace refresh and server restart keybindings
+-- LSP Management Keybindings
 vim.keymap.set('n', '<leader>lr', function()
   -- Refresh LSP workspace
   local clients = vim.lsp.get_active_clients()
@@ -40,10 +40,13 @@ vim.keymap.set('n', '<leader>lR', function()
   for _, client in ipairs(clients) do
     vim.lsp.stop_client(client.id)
   end
+  -- Restart after a brief delay
+  vim.defer_fn(function()
+    vim.cmd('LspStart')
+  end, 500)
   vim.notify('LSP servers restarted', vim.log.levels.INFO)
 end, { desc = '[L]SP [R]estart servers' })
 
--- Add a keybinding to force LSP reconnection
 vim.keymap.set('n', '<leader>lc', function()
   -- Force LSP reconnection by restarting the current buffer's LSP
   local bufnr = vim.api.nvim_get_current_buf()
@@ -57,3 +60,23 @@ vim.keymap.set('n', '<leader>lc', function()
   end, 1000)
   vim.notify('LSP reconnecting...', vim.log.levels.INFO)
 end, { desc = '[L]SP [C]onnect/reconnect' })
+
+-- Python Development Keybindings
+vim.keymap.set('n', '<leader>py', ':!python3 %<CR>', { desc = '[P]ython run current file' })
+vim.keymap.set('n', '<leader>pt', ':!python3 -m pytest %<CR>', { desc = '[P]ython [T]est current file' })
+vim.keymap.set('n', '<leader>pv', ':!python3 -m venv .venv<CR>', { desc = '[P]ython create [V]irtual environment' })
+
+-- Enhanced Navigation Keybindings
+vim.keymap.set('n', '<leader>j', '<C-d>', { desc = 'Scroll down half page' })
+vim.keymap.set('n', '<leader>k', '<C-u>', { desc = 'Scroll up half page' })
+vim.keymap.set('n', '<leader>gg', ':LazyGit<CR>', { desc = '[G]it [G]ui (requires lazygit)' })
+
+-- Buffer Management
+vim.keymap.set('n', '<leader>bd', ':bdelete<CR>', { desc = '[B]uffer [D]elete current' })
+vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = '[B]uffer [N]ext' })
+vim.keymap.set('n', '<leader>bp', ':bprevious<CR>', { desc = '[B]uffer [P]revious' })
+
+-- Quick file operations
+vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = '[W]rite file' })
+vim.keymap.set('n', '<leader>q', ':q<CR>', { desc = '[Q]uit' })
+vim.keymap.set('n', '<leader>x', ':x<CR>', { desc = 'Save and e[X]it' })
