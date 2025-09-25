@@ -869,6 +869,11 @@ require('lazy').setup({
           'lua-language-server', -- for lspconfig 'lua_ls'
           'pyright',             -- Python LSP
           'stylua',              -- Lua formatter
+          'black',               -- Python formatter
+          'isort',               -- Python import sorter
+          'flake8',              -- Python linter
+          'mypy',                -- Python type checker
+          'debugpy',             -- Python debugger
         },
       }
 
