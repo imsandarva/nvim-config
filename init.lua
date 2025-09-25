@@ -814,32 +814,7 @@ require('lazy').setup({
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
         pyright = {
-          settings = {
-            pyright = {
-              disableLanguageServices = false,
-              disableOrganizeImports = false,
-            },
-            python = {
-              analysis = {
-                autoSearchPaths = true,
-                useLibraryCodeForTypes = true,
-                diagnosticMode = 'workspace',
-                typeCheckingMode = 'basic',
-                autoImportCompletions = true,
-                diagnosticSeverityOverrides = {
-                  reportMissingImports = 'warning',
-                  reportMissingTypeStubs = 'none',
-                  reportImportCycles = 'warning',
-                  reportUnusedImport = 'warning',
-                  reportUnusedClass = 'warning',
-                  reportUnusedFunction = 'warning',
-                  reportUnusedVariable = 'warning',
-                  reportDuplicateImport = 'warning',
-                },
-              },
-              pythonPath = vim.fn.exepath('python3') or vim.fn.exepath('python') or 'python',
-            },
-          },
+          settings = require('custom.python').pyright_settings,
           on_attach = function(client, bufnr)
             -- Disable hover for pyright to avoid conflicts with other plugins
             client.server_capabilities.hoverProvider = false
@@ -1230,6 +1205,8 @@ vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagn
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
 
--- Additional Python development keybindings
-vim.keymap.set('n', '<leader>py', ':!python %<CR>', { desc = '[P]ython run current file' })
+-- Setup Python-specific configurations
+local python_config = require('custom.python')
+python_config.setup_keybindings()
+python_config.setup_autocommands()
 
