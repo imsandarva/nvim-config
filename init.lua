@@ -771,6 +771,10 @@ require('lazy').setup({
       -- Use cmp-nvim-lsp capabilities for better completion integration
       local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
+      -- Disable automatic formatting from LSP servers
+      capabilities.documentFormattingProvider = false
+      capabilities.documentRangeFormattingProvider = false
+
       -- Diagnostic Config
       -- See :help vim.diagnostic.Opts
       vim.diagnostic.config {
