@@ -89,6 +89,12 @@ end, { desc = '[S]earch and [R]eplace in file' })
 -- Check LSP status
 vim.keymap.set('n', '<leader>ls', ':LspStatus<CR>', { desc = '[L]SP [S]tatus' })
 
+-- Restart LSP servers
+vim.keymap.set('n', '<leader>lr', ':LspRestart<CR>', { desc = '[L]SP [R]estart servers' })
+
+-- Verify LSP server installation
+vim.keymap.set('n', '<leader>lv', ':lua require("custom.health").verify_lsp_servers()<CR>', { desc = '[L]SP [V]erify installation' })
+
 -- Hop motion keybindings
 vim.keymap.set('', '<leader><leader>w', ':HopWord<CR>', { desc = 'Hop to word' })
 vim.keymap.set('', '<leader><leader>l', ':HopLine<CR>', { desc = 'Hop to line' })

@@ -863,57 +863,174 @@ require('lazy').setup({
         },
       }
 
-      -- Setup mason-lspconfig for automatic LSP server management
-      require('mason-lspconfig').setup {
-        ensure_installed = {
-          'lua_ls',
-          'pyright',
-        },
-        automatic_installation = true,
-      }
+      -- Robust LSP server setup with error handling and retry mechanisms
+      local function setup_lsp_servers()
+        -- Ensure mason-lspconfig is properly initialized
+        local mason_lspconfig_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
+        if not mason_lspconfig_ok then
+          vim.notify('Failed to load mason-lspconfig', vim.log.levels.ERROR)
+          return
+        end
 
-      -- Configure LSP servers using the appropriate API for the Neovim version
-      for server_name, server_config in pairs(servers) do
-        server_config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server_config.capabilities or {})
+        -- Setup mason-lspconfig with error handling
+        local setup_ok = pcall(function()
+          mason_lspconfig.setup {
+            ensure_installed = {
+              'lua_ls',
+              'pyright',
+            },
+            automatic_installation = true,
+          }
+        end)
 
-        -- Use new Neovim 0.11 LSP API (recommended for 0.11.3)
-        if vim.fn.has('nvim-0.11') == 1 and vim.lsp.config then
-          vim.lsp.config(server_name, server_config)
-        else
-          -- Fallback to lspconfig for older versions
-          require('lspconfig')[server_name].setup(server_config)
+        if not setup_ok then
+          vim.notify('Failed to setup mason-lspconfig', vim.log.levels.ERROR)
+          return
+        end
+
+        -- Configure LSP servers with comprehensive error handling
+        local function safe_setup_server(server_name, server_config)
+          -- Add capabilities to server config
+          server_config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server_config.capabilities or {})
+
+          -- Setup server with multiple fallback attempts
+          local attempts = 0
+          local max_attempts = 3
+
+          while attempts < max_attempts do
+            local success = pcall(function()
+              -- Use new Neovim 0.11 LSP API if available
+              if vim.fn.has('nvim-0.11') == 1 and vim.lsp.config then
+                vim.lsp.config(server_name, server_config)
+              else
+                -- Fallback to lspconfig
+                local lspconfig_ok, lspconfig = pcall(require, 'lspconfig')
+                if lspconfig_ok then
+                  lspconfig[server_name].setup(server_config)
+                else
+                  error('Failed to load lspconfig')
+                end
+              end
+            end)
+
+            if success then
+              vim.notify('Successfully configured LSP server: ' .. server_name, vim.log.levels.INFO)
+              break
+            else
+              attempts = attempts + 1
+              vim.notify(string.format('Failed to setup %s (attempt %d/%d)', server_name, attempts, max_attempts), vim.log.levels.WARN)
+
+              if attempts < max_attempts then
+                vim.wait(1000) -- Wait 1 second before retry
+              end
+            end
+          end
+
+          if attempts >= max_attempts then
+            vim.notify('Failed to setup LSP server: ' .. server_name, vim.log.levels.ERROR)
+          end
+        end
+
+        -- Setup all servers
+        for server_name, server_config in pairs(servers) do
+          safe_setup_server(server_name, server_config)
+        end
+
+        -- Enable LSP servers for Neovim 0.11.3 with error handling
+        if vim.fn.has('nvim-0.11') == 1 then
+          local enable_ok = pcall(function()
+            vim.lsp.enable('lua_ls')
+            vim.lsp.enable('pyright')
+          end)
+
+          if not enable_ok then
+            vim.notify('Failed to enable LSP servers', vim.log.levels.WARN)
+          end
         end
       end
 
-      -- Enable LSP servers for Neovim 0.11.3
-      if vim.fn.has('nvim-0.11') == 1 then
-        vim.lsp.enable('lua_ls')
-        vim.lsp.enable('pyright')
-      end
+      -- Initialize LSP servers
+      setup_lsp_servers()
 
-      -- Auto-start LSP servers when opening files (for Neovim 0.11.3)
+      -- Auto-start LSP servers when opening files with comprehensive error handling
       vim.api.nvim_create_autocmd('FileType', {
         pattern = { 'python', 'lua' },
         callback = function(args)
-          if vim.fn.has('nvim-0.11') == 1 then
-            -- Ensure LSP servers are enabled for the current buffer
-            vim.lsp.enable('lua_ls', { bufnr = args.buf })
-            vim.lsp.enable('pyright', { bufnr = args.buf })
+          local function start_lsp_servers()
+            local start_attempts = 0
+            local max_start_attempts = 2
+
+            while start_attempts < max_start_attempts do
+              local success = pcall(function()
+                if vim.fn.has('nvim-0.11') == 1 then
+                  -- Ensure LSP servers are enabled for the current buffer
+                  vim.lsp.enable('lua_ls', { bufnr = args.buf })
+                  vim.lsp.enable('pyright', { bufnr = args.buf })
+                else
+                  -- Fallback for older versions
+                  vim.lsp.buf_attach_client(args.buf, vim.lsp.start_client {
+                    name = 'lua_ls',
+                    cmd = { 'lua-language-server' },
+                    capabilities = capabilities,
+                  })
+                  vim.lsp.buf_attach_client(args.buf, vim.lsp.start_client {
+                    name = 'pyright',
+                    cmd = { 'pyright-langserver', '--stdio' },
+                    capabilities = capabilities,
+                  })
+                end
+              end)
+
+              if success then
+                break
+              else
+                start_attempts = start_attempts + 1
+                if start_attempts < max_start_attempts then
+                  vim.wait(500) -- Wait 500ms before retry
+                end
+              end
+            end
+
+            if start_attempts >= max_start_attempts then
+              vim.notify('Failed to start LSP servers for buffer', vim.log.levels.WARN)
+            end
           end
+
+          -- Start LSP servers asynchronously
+          vim.schedule(start_lsp_servers)
         end,
       })
 
-      -- Debug: Check LSP status
+      -- Enhanced LSP status command with detailed information
       vim.api.nvim_create_user_command('LspStatus', function()
         local clients = vim.lsp.get_active_clients()
         if #clients == 0 then
-          print('No LSP servers are currently active')
+          print('❌ No LSP servers are currently active')
+          print('💡 Try opening a Python or Lua file, or run :LspRestart')
         else
-          print('Active LSP servers:')
+          print('✅ Active LSP servers:')
           for _, client in ipairs(clients) do
-            print('- ' .. client.name .. ' (id: ' .. client.id .. ')')
+            local status = '🟢'
+            if client.status == 'starting' then status = '🟡' end
+            if client.status == 'stopping' then status = '🟠' end
+            print(string.format('- %s %s (id: %d, workspace: %s)', status, client.name, client.id, client.workspaceFolders and client.workspaceFolders[1] and client.workspaceFolders[1].name or 'N/A'))
           end
         end
+      end, {})
+
+      -- Add LSP restart command for troubleshooting
+      vim.api.nvim_create_user_command('LspRestart', function()
+        -- Stop all clients
+        local clients = vim.lsp.get_active_clients()
+        for _, client in ipairs(clients) do
+          vim.lsp.stop_client(client.id)
+        end
+
+        -- Restart after a short delay
+        vim.defer_fn(function()
+          setup_lsp_servers()
+          vim.notify('LSP servers restarted', vim.log.levels.INFO)
+        end, 1000)
       end, {})
     end,
   },
@@ -1264,4 +1381,5 @@ local python_config = require('custom.python')
 python_config.setup_keybindings()
 python_config.setup_autocommands()
 python_config.disable_lsp_formatting()
+
 
