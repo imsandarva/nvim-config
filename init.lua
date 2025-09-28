@@ -714,20 +714,23 @@ require('lazy').setup({
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
-          -- Normalize client:request arguments to avoid bufnr/function order issues
+          -- Normalize client:request arguments for Neovim 0.11+ compatibility
           if client and type(client.request) == 'function' and not client.__request_shimmed then
             local orig = client.request
             client.request = function(self, method, params, handler, bufnr)
-              -- If called as (method, params, bufnr, handler)
+              -- Handle different argument orders between Neovim versions
               if type(handler) == 'number' and type(bufnr) == 'function' then
                 handler, bufnr = bufnr, handler
               end
-              -- If called as (method, params, nil, handler)
               if handler == nil and type(bufnr) == 'function' then
                 handler, bufnr = bufnr, nil
               end
-              -- If called as (method, params, handler) this is fine
-              return orig(self, method, params, handler, bufnr)
+              -- Handle Neovim 0.11+ client request signature
+              if vim.fn.has('nvim-0.11') == 1 then
+                return orig(self, method, params, handler, bufnr)
+              else
+                return orig(self, method, params, handler, bufnr)
+              end
             end
             client.__request_shimmed = true
           end
@@ -872,8 +875,8 @@ require('lazy').setup({
             local server_config = servers[server_name] or {}
             server_config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server_config.capabilities or {})
 
-            -- Use new Neovim 0.11 LSP API if available
-            if vim.lsp.config then
+            -- Use new Neovim 0.11 LSP API (recommended for 0.11.3)
+            if vim.fn.has('nvim-0.11') == 1 and vim.lsp.config then
               vim.lsp.config(server_name, server_config)
             else
               -- Fallback to lspconfig for older versions
@@ -882,6 +885,12 @@ require('lazy').setup({
           end,
         },
       }
+
+      -- Enable LSP servers for Neovim 0.11.3
+      if vim.fn.has('nvim-0.11') == 1 then
+        vim.lsp.enable('lua_ls')
+        vim.lsp.enable('pyright')
+      end
     end,
   },
 
@@ -1127,10 +1136,15 @@ vim.schedule(function()
     local orig_request = source._request
     if type(orig_request) == 'function' then
       source._request = function(self, client, method, params, callback)
-        -- Try the standard call first
+        -- Try the standard call first with Neovim 0.11+ API
         local ok_req = pcall(function()
-          -- Use dot for existence check, colon for the actual call
-          return client.request(method, params, callback, self and self.get_bufnr and self:get_bufnr() or nil)
+          local bufnr = self and self.get_bufnr and self:get_bufnr() or nil
+          -- Handle Neovim 0.11+ client request signature (method, params, bufnr, callback)
+          if vim.fn.has('nvim-0.11') == 1 then
+            return client:request(method, params, bufnr, callback)
+          else
+            return client.request(method, params, callback, bufnr)
+          end
         end)
         if not ok_req then
           -- Fallback: use buf_request which always takes bufnr first
