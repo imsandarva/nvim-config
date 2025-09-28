@@ -86,13 +86,10 @@ vim.keymap.set('n', '<leader>sr', function()
   vim.cmd(string.format('%%s/%s/%s/gc', vim.fn.escape(search, '/'), vim.fn.escape(replace, '/')))
 end, { desc = '[S]earch and [R]eplace in file' })
 
--- Check LSP status
+-- LSP keybindings
 vim.keymap.set('n', '<leader>ls', ':LspStatus<CR>', { desc = '[L]SP [S]tatus' })
-
--- Restart LSP servers
-vim.keymap.set('n', '<leader>lr', ':LspRestart<CR>', { desc = '[L]SP [R]estart servers' })
-
--- Verify LSP server installation
+vim.keymap.set('n', '<leader>la', ':LspStart<CR>', { desc = '[L]SP St[A]rt servers' })
+vim.keymap.set('n', '<leader>lq', ':LspStop<CR>', { desc = '[L]SP St[Q]op servers' })
 vim.keymap.set('n', '<leader>lv', ':lua require("custom.health").verify_lsp_servers()<CR>', { desc = '[L]SP [V]erify installation' })
 
 -- Refresh Python workspace for better imports
