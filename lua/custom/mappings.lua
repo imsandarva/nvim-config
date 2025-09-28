@@ -86,6 +86,15 @@ vim.keymap.set('n', '<leader>sr', function()
   vim.cmd(string.format('%%s/%s/%s/gc', vim.fn.escape(search, '/'), vim.fn.escape(replace, '/')))
 end, { desc = '[S]earch and [R]eplace in file' })
 
+-- Check LSP status
+vim.keymap.set('n', '<leader>ls', ':LspStatus<CR>', { desc = '[L]SP [S]tatus' })
+
+-- Hop motion keybindings
+vim.keymap.set('', '<leader><leader>w', ':HopWord<CR>', { desc = 'Hop to word' })
+vim.keymap.set('', '<leader><leader>l', ':HopLine<CR>', { desc = 'Hop to line' })
+vim.keymap.set('', '<leader><leader>c', ':HopChar1<CR>', { desc = 'Hop to character' })
+vim.keymap.set('', '<leader><leader>p', ':HopPattern<CR>', { desc = 'Hop to pattern' })
+
 -- Quick file operations
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = '[W]rite file' })
 vim.keymap.set('n', '<leader>q', ':q<CR>', { desc = '[Q]uit' })
