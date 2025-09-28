@@ -238,6 +238,10 @@ vim.opt.rtp:prepend(lazypath)
 --
 --  To update plugins you can run
 --    :Lazy update
+
+-- Suppress nvim-lspconfig deprecation warnings for Neovim 0.10
+-- Neovim 0.10 is fully supported, warnings are about future 0.11+ changes
+vim.g.lspconfig_log_level = vim.log.levels.ERROR
 --
 -- NOTE: Here is where you install your plugins.
 --
