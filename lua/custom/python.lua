@@ -1,6 +1,6 @@
 local M = {}
 
--- Python-specific LSP settings
+-- Optimized Python LSP settings for maximum efficiency
 M.pyright_settings = {
   pyright = {
     disableLanguageServices = false,
@@ -11,22 +11,51 @@ M.pyright_settings = {
       autoSearchPaths = true,
       useLibraryCodeForTypes = true,
       diagnosticMode = 'workspace',
-      typeCheckingMode = 'basic',
+      typeCheckingMode = 'off', -- Disable type checking for faster completions
       autoImportCompletions = true,
+      includeFileSpecs = { '*.py', '*.pyi' },
+      exclude = { '__pycache__', '.git', 'node_modules' },
       diagnosticSeverityOverrides = {
-        reportMissingImports = 'warning',
+        reportMissingImports = 'none', -- Don't warn about missing imports during completion
         reportMissingTypeStubs = 'none',
-        reportImportCycles = 'warning',
-        reportUnusedImport = 'warning',
-        reportUnusedClass = 'warning',
-        reportUnusedFunction = 'warning',
-        reportUnusedVariable = 'warning',
-        reportDuplicateImport = 'warning',
+        reportImportCycles = 'none',
+        reportUnusedImport = 'none',
+        reportUnusedClass = 'none',
+        reportUnusedFunction = 'none',
+        reportUnusedVariable = 'none',
+        reportDuplicateImport = 'none',
       },
+      -- Optimize for speed and completions
+      useLibraryCodeForTypes = false, -- Faster but less accurate
     },
     pythonPath = vim.fn.exepath('python3') or vim.fn.exepath('python') or 'python',
   },
 }
+
+-- Setup workspace for better import completions
+M.setup_workspace = function()
+  -- Auto-detect Python project root and set workspace
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'python',
+    callback = function()
+      local current_file = vim.api.nvim_buf_get_name(0)
+      local project_root = vim.fn.fnamemodify(current_file, ':h')
+
+      -- Look for common Python project indicators
+      local indicators = { 'pyproject.toml', 'setup.py', 'requirements.txt', '.git' }
+      for _, indicator in ipairs(indicators) do
+        if vim.fn.filereadable(project_root .. '/' .. indicator) == 1 or
+           vim.fn.isdirectory(project_root .. '/' .. indicator) == 1 then
+          -- Found project root, update Pyright workspace
+          if vim.lsp.buf.server_ready() then
+            vim.lsp.buf.add_workspace_folder(project_root)
+          end
+          break
+        end
+      end
+    end,
+  })
+end
 
 -- Python-specific keybindings
 M.setup_keybindings = function()
@@ -127,6 +156,38 @@ M.disable_lsp_formatting = function()
       end
     end,
   })
+end
+
+-- Debug Python environment
+M.debug_python_env = function()
+  print('=== Python Environment Debug ===')
+  print('Python executable:', vim.fn.exepath('python3') or vim.fn.exepath('python') or 'NOT FOUND')
+  print('Current working directory:', vim.fn.getcwd())
+  print('Current file:', vim.fn.expand('%:p'))
+  print('File type:', vim.bo.filetype)
+
+  -- Check if we're in a Python project
+  local indicators = { 'pyproject.toml', 'setup.py', 'requirements.txt', 'Pipfile', '.git' }
+  for _, indicator in ipairs(indicators) do
+    if vim.fn.filereadable(indicator) == 1 or vim.fn.isdirectory(indicator) == 1 then
+      print('Found project indicator:', indicator)
+      break
+    end
+  end
+
+  -- Check LSP status
+  local clients = {}
+  if vim.lsp.get_clients then
+    clients = vim.lsp.get_clients({ name = 'pyright' })
+  else
+    clients = vim.lsp.get_active_clients({ name = 'pyright' })
+  end
+  if #clients > 0 then
+    print('Pyright status: ACTIVE')
+    print('Workspace folders:', vim.inspect(clients[1].workspaceFolders))
+  else
+    print('Pyright status: NOT ACTIVE')
+  end
 end
 
 return M

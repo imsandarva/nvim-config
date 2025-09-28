@@ -240,28 +240,6 @@ vim.opt.rtp:prepend(lazypath)
 --    :Lazy update
 
 -- Configure LSP for Neovim 0.11+ compatibility
---
--- NOTE: Here is where you install your plugins.
---
--- LSP request compatibility shim for Neovim 0.11+
--- Handles API differences between versions
-do
-  local lsp = vim.lsp
-  local orig_request = lsp and lsp.Client and lsp.Client.request
-  if type(orig_request) == 'function' then
-    lsp.Client.request = function(self, method, params, handler, bufnr)
-      -- Handle argument order differences between Neovim versions
-      if type(bufnr) == 'function' and type(handler) ~= 'function' then
-        handler, bufnr = bufnr, nil
-      end
-      -- Handle new Neovim 0.11 client request signature
-      if handler == nil and type(bufnr) == 'function' then
-        handler, bufnr = bufnr, nil
-      end
-      return orig_request(self, method, params, handler, bufnr)
-    end
-  end
-end
 
 require('lazy').setup({
   -- Load core tools
@@ -729,7 +707,7 @@ require('lazy').setup({
               if vim.fn.has('nvim-0.11') == 1 then
                 return orig(self, method, params, handler, bufnr)
               else
-                return orig(self, method, params, handler, bufnr)
+              return orig(self, method, params, handler, bufnr)
               end
             end
             client.__request_shimmed = true
@@ -781,6 +759,12 @@ require('lazy').setup({
       -- Disable automatic formatting from LSP servers
       capabilities.documentFormattingProvider = false
       capabilities.documentRangeFormattingProvider = false
+
+      -- Optimize for fast completions and imports
+      capabilities.textDocument.completion.completionItem.resolveSupport = {
+        properties = { 'documentation', 'detail', 'additionalTextEdits' }
+      }
+      capabilities.textDocument.completion.completionItem.snippetSupport = true
 
       -- Diagnostic Config
       -- See :help vim.diagnostic.Opts
@@ -1002,8 +986,13 @@ require('lazy').setup({
       })
 
       -- Enhanced LSP status command with detailed information
-      vim.api.nvim_create_user_command('LspStatus', function()
-        local clients = vim.lsp.get_active_clients()
+      vim.api.nvim_create_user_command('LspStatus', function(opts)
+        local clients = {}
+        if vim.lsp.get_clients then
+          clients = vim.lsp.get_clients({ bufnr = opts and opts.bufnr or nil })
+        else
+          clients = vim.lsp.get_active_clients()
+        end
         if #clients == 0 then
           print('❌ No LSP servers are currently active')
           print('💡 Try opening a Python or Lua file, or run :LspRestart')
@@ -1021,7 +1010,12 @@ require('lazy').setup({
       -- Add LSP restart command for troubleshooting
       vim.api.nvim_create_user_command('LspRestart', function()
         -- Stop all clients
-        local clients = vim.lsp.get_active_clients()
+        local clients = {}
+        if vim.lsp.get_clients then
+          clients = vim.lsp.get_clients()
+        else
+          clients = vim.lsp.get_active_clients()
+        end
         for _, client in ipairs(clients) do
           vim.lsp.stop_client(client.id)
         end
@@ -1054,7 +1048,7 @@ require('lazy').setup({
       format_on_save = function(bufnr)
         -- Disable automatic formatting for all filetypes
         -- Manual formatting available with <leader>f or <leader>pb for Python
-        return nil
+          return nil
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
@@ -1380,6 +1374,7 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagn
 local python_config = require('custom.python')
 python_config.setup_keybindings()
 python_config.setup_autocommands()
+python_config.setup_workspace()
 python_config.disable_lsp_formatting()
 
 

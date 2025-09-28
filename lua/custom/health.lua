@@ -2,7 +2,12 @@ local M = {}
 
 -- Check LSP server health with detailed diagnostics
 function M.check_lsp_health()
-  local clients = vim.lsp.get_active_clients()
+  local clients = {}
+  if vim.lsp.get_clients then
+    clients = vim.lsp.get_clients()
+  else
+    clients = vim.lsp.get_active_clients()
+  end
   if #clients == 0 then
     vim.notify('❌ No LSP servers are currently active', vim.log.levels.WARN)
     vim.notify('💡 Try: :LspRestart or open a supported file type', vim.log.levels.INFO)
@@ -50,7 +55,13 @@ function M.check_completion_health()
   end
 
   -- As a fallback, validate that LSP completion capability exists on any client
-  for _, client in ipairs(vim.lsp.get_active_clients()) do
+  local clients = {}
+  if vim.lsp.get_clients then
+    clients = vim.lsp.get_clients()
+  else
+    clients = vim.lsp.get_active_clients()
+  end
+  for _, client in ipairs(clients) do
     if client.server_capabilities and client.server_capabilities.completionProvider then
       vim.notify('LSP completion is available via ' .. client.name, vim.log.levels.INFO)
       return true

@@ -95,6 +95,29 @@ vim.keymap.set('n', '<leader>lr', ':LspRestart<CR>', { desc = '[L]SP [R]estart s
 -- Verify LSP server installation
 vim.keymap.set('n', '<leader>lv', ':lua require("custom.health").verify_lsp_servers()<CR>', { desc = '[L]SP [V]erify installation' })
 
+-- Refresh Python workspace for better imports
+vim.keymap.set('n', '<leader>lw', function()
+  -- Force refresh Pyright workspace
+  local clients = {}
+  if vim.lsp.get_clients then
+    clients = vim.lsp.get_clients({ name = 'pyright' })
+  else
+    clients = vim.lsp.get_active_clients({ name = 'pyright' })
+  end
+  for _, client in ipairs(clients) do
+    client.request('workspace/didChangeWorkspaceFolders', {
+      event = {
+        added = {},
+        removed = {}
+      }
+    })
+    vim.notify('Pyright workspace refreshed', vim.log.levels.INFO)
+  end
+end, { desc = '[L]SP refresh [W]orkspace' })
+
+-- Debug Python environment
+vim.keymap.set('n', '<leader>pd', ':lua require("custom.python").debug_python_env()<CR>', { desc = '[P]ython [D]ebug environment' })
+
 -- Quick file operations
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = '[W]rite file' })
 vim.keymap.set('n', '<leader>q', ':q<CR>', { desc = '[Q]uit' })
