@@ -870,27 +870,51 @@ require('lazy').setup({
           'pyright',
         },
         automatic_installation = true,
-        handlers = {
-          function(server_name)
-            local server_config = servers[server_name] or {}
-            server_config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server_config.capabilities or {})
-
-            -- Use new Neovim 0.11 LSP API (recommended for 0.11.3)
-            if vim.fn.has('nvim-0.11') == 1 and vim.lsp.config then
-              vim.lsp.config(server_name, server_config)
-            else
-              -- Fallback to lspconfig for older versions
-              require('lspconfig')[server_name].setup(server_config)
-            end
-          end,
-        },
       }
+
+      -- Configure LSP servers using the appropriate API for the Neovim version
+      for server_name, server_config in pairs(servers) do
+        server_config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server_config.capabilities or {})
+
+        -- Use new Neovim 0.11 LSP API (recommended for 0.11.3)
+        if vim.fn.has('nvim-0.11') == 1 and vim.lsp.config then
+          vim.lsp.config(server_name, server_config)
+        else
+          -- Fallback to lspconfig for older versions
+          require('lspconfig')[server_name].setup(server_config)
+        end
+      end
 
       -- Enable LSP servers for Neovim 0.11.3
       if vim.fn.has('nvim-0.11') == 1 then
         vim.lsp.enable('lua_ls')
         vim.lsp.enable('pyright')
       end
+
+      -- Auto-start LSP servers when opening files (for Neovim 0.11.3)
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = { 'python', 'lua' },
+        callback = function(args)
+          if vim.fn.has('nvim-0.11') == 1 then
+            -- Ensure LSP servers are enabled for the current buffer
+            vim.lsp.enable('lua_ls', { bufnr = args.buf })
+            vim.lsp.enable('pyright', { bufnr = args.buf })
+          end
+        end,
+      })
+
+      -- Debug: Check LSP status
+      vim.api.nvim_create_user_command('LspStatus', function()
+        local clients = vim.lsp.get_active_clients()
+        if #clients == 0 then
+          print('No LSP servers are currently active')
+        else
+          print('Active LSP servers:')
+          for _, client in ipairs(clients) do
+            print('- ' .. client.name .. ' (id: ' .. client.id .. ')')
+          end
+        end
+      end, {})
     end,
   },
 
