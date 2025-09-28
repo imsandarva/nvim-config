@@ -139,13 +139,32 @@ require('lazy').setup({
         mapping = cmp.mapping.preset.insert({
           ['<C-n>'] = cmp.mapping.select_next_item(),
           ['<C-p>'] = cmp.mapping.select_prev_item(),
+          ['<CR>'] = cmp.mapping.confirm({ select = true }),
           ['<C-y>'] = cmp.mapping.confirm({ select = true }),
           ['<C-Space>'] = cmp.mapping.complete(),
+          ['<Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item()
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
+          ['<S-Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item()
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
         }),
-        sources = {
-          { name = 'nvim_lsp' },
-          { name = 'buffer' },
-          { name = 'path' },
+        sources = cmp.config.sources({
+          { name = 'nvim_lsp', priority = 1000 },
+          { name = 'luasnip', priority = 750 },
+          { name = 'buffer', priority = 500 },
+          { name = 'path', priority = 250 },
+        }),
+        experimental = {
+          ghost_text = true,
         },
       })
 
