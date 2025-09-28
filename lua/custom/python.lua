@@ -176,12 +176,7 @@ M.debug_python_env = function()
   end
 
   -- Check LSP status
-  local clients = {}
-  if vim.lsp.get_clients then
-    clients = vim.lsp.get_clients({ name = 'pyright' })
-  else
-    clients = vim.lsp.get_active_clients({ name = 'pyright' })
-  end
+  local clients = vim.lsp.get_clients({ name = 'pyright' })
   if #clients > 0 then
     print('Pyright status: ACTIVE')
     print('Workspace folders:', vim.inspect(clients[1].workspaceFolders))

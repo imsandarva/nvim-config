@@ -18,7 +18,7 @@ vim.keymap.set('v', '_d', 'd', { noremap = true })
 -- LSP Management Keybindings
 vim.keymap.set('n', '<leader>lr', function()
   -- Refresh LSP workspace
-  local clients = vim.lsp.get_active_clients()
+  local clients = vim.lsp.get_clients()
   for _, client in ipairs(clients) do
     if client.supports_method('workspace/didChangeWatchedFiles') then
       client.notify('workspace/didChangeWatchedFiles', {
@@ -36,7 +36,7 @@ end, { desc = '[L]SP [R]efresh workspace' })
 
 vim.keymap.set('n', '<leader>lR', function()
   -- Restart LSP servers
-  local clients = vim.lsp.get_active_clients()
+  local clients = vim.lsp.get_clients()
   for _, client in ipairs(clients) do
     vim.lsp.stop_client(client.id)
   end

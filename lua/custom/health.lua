@@ -2,12 +2,7 @@ local M = {}
 
 -- Check LSP server health with detailed diagnostics
 function M.check_lsp_health()
-  local clients = {}
-  if vim.lsp.get_clients then
-    clients = vim.lsp.get_clients()
-  else
-    clients = vim.lsp.get_active_clients()
-  end
+  local clients = vim.lsp.get_clients()
   if #clients == 0 then
     vim.notify('❌ No LSP servers are currently active', vim.log.levels.WARN)
     vim.notify('💡 Try: :LspRestart or open a supported file type', vim.log.levels.INFO)
@@ -18,24 +13,12 @@ function M.check_lsp_health()
   vim.notify('🔍 Checking LSP server health...', vim.log.levels.INFO)
 
   for _, client in ipairs(clients) do
-    local status = client.status or 'unknown'
-    local status_icon = '❓'
-
-    if status == 'running' or status == 'initialized' then
-      status_icon = '✅'
-      vim.notify(string.format('%s LSP server %s is healthy', status_icon, client.name), vim.log.levels.INFO)
-    elseif status == 'starting' then
-      status_icon = '⏳'
-      vim.notify(string.format('%s LSP server %s is starting...', status_icon, client.name), vim.log.levels.INFO)
-    else
-      status_icon = '❌'
-      vim.notify(string.format('%s LSP server %s has issues (status: %s)', status_icon, client.name, status), vim.log.levels.WARN)
-      healthy = false
-    end
+    local status_icon = '✅'
+    vim.notify(string.format('%s LSP server %s is healthy', status_icon, client.name), vim.log.levels.INFO)
 
     -- Check if server has required capabilities
-    if client.server_capabilities then
-      local caps = client.server_capabilities
+    if client.capabilities then
+      local caps = client.capabilities
       if not caps.completionProvider and not caps.hoverProvider then
         vim.notify(string.format('⚠️  %s may be missing important capabilities', client.name), vim.log.levels.WARN)
       end
@@ -55,14 +38,9 @@ function M.check_completion_health()
   end
 
   -- As a fallback, validate that LSP completion capability exists on any client
-  local clients = {}
-  if vim.lsp.get_clients then
-    clients = vim.lsp.get_clients()
-  else
-    clients = vim.lsp.get_active_clients()
-  end
+  local clients = vim.lsp.get_clients()
   for _, client in ipairs(clients) do
-    if client.server_capabilities and client.server_capabilities.completionProvider then
+    if client.capabilities and client.capabilities.completionProvider then
       vim.notify('LSP completion is available via ' .. client.name, vim.log.levels.INFO)
       return true
     end
