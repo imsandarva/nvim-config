@@ -239,23 +239,23 @@ vim.opt.rtp:prepend(lazypath)
 --  To update plugins you can run
 --    :Lazy update
 
--- Suppress nvim-lspconfig deprecation warnings for Neovim 0.10
--- Neovim 0.10 is fully supported, warnings are about future 0.11+ changes
-vim.g.lspconfig_log_level = vim.log.levels.ERROR
+-- Configure LSP for Neovim 0.11+ compatibility
 --
 -- NOTE: Here is where you install your plugins.
 --
--- LSP request compatibility shim:
--- Some completion sources call client.request with (method, params, callback, bufnr?)
--- while others on newer APIs may pass (method, params, nil, callback).
--- This small wrapper swaps the arguments if the 4th is a function to prevent
--- 'bufnr: expected number, got function' errors without removing any features.
+-- LSP request compatibility shim for Neovim 0.11+
+-- Handles API differences between versions
 do
   local lsp = vim.lsp
   local orig_request = lsp and lsp.Client and lsp.Client.request
   if type(orig_request) == 'function' then
     lsp.Client.request = function(self, method, params, handler, bufnr)
+      -- Handle argument order differences between Neovim versions
       if type(bufnr) == 'function' and type(handler) ~= 'function' then
+        handler, bufnr = bufnr, nil
+      end
+      -- Handle new Neovim 0.11 client request signature
+      if handler == nil and type(bufnr) == 'function' then
         handler, bufnr = bufnr, nil
       end
       return orig_request(self, method, params, handler, bufnr)
@@ -860,11 +860,28 @@ require('lazy').setup({
         },
       }
 
-      -- Setup LSP servers with proper capabilities
-      for server_name, server in pairs(servers) do
-        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-        require('lspconfig')[server_name].setup(server)
-      end
+      -- Setup mason-lspconfig for automatic LSP server management
+      require('mason-lspconfig').setup {
+        ensure_installed = {
+          'lua_ls',
+          'pyright',
+        },
+        automatic_installation = true,
+        handlers = {
+          function(server_name)
+            local server_config = servers[server_name] or {}
+            server_config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server_config.capabilities or {})
+
+            -- Use new Neovim 0.11 LSP API if available
+            if vim.lsp.config then
+              vim.lsp.config(server_name, server_config)
+            else
+              -- Fallback to lspconfig for older versions
+              require('lspconfig')[server_name].setup(server_config)
+            end
+          end,
+        },
+      }
     end,
   },
 
