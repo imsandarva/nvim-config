@@ -18,18 +18,4 @@ return {
   { 'tpope/vim-sleuth' }, -- Detect tabstop and shiftwidth automatically
   { 'numToStr/Comment.nvim', config = true }, -- Better commenting
   { 'folke/trouble.nvim', config = true }, -- Better diagnostics
-
-  -- Motion enhancement
-  {
-    'smoka7/hop.nvim',
-    version = "*",
-    opts = {
-      keys = 'etovxqpdygfblzhckisuran',
-      case_insensitive = true,
-      multi_windows = true,
-    },
-    config = function()
-      require('hop').setup()
-    end,
-  },
 }

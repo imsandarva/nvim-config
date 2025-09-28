@@ -95,12 +95,6 @@ vim.keymap.set('n', '<leader>lr', ':LspRestart<CR>', { desc = '[L]SP [R]estart s
 -- Verify LSP server installation
 vim.keymap.set('n', '<leader>lv', ':lua require("custom.health").verify_lsp_servers()<CR>', { desc = '[L]SP [V]erify installation' })
 
--- Hop motion keybindings
-vim.keymap.set('', '<leader><leader>w', ':HopWord<CR>', { desc = 'Hop to word' })
-vim.keymap.set('', '<leader><leader>l', ':HopLine<CR>', { desc = 'Hop to line' })
-vim.keymap.set('', '<leader><leader>c', ':HopChar1<CR>', { desc = 'Hop to character' })
-vim.keymap.set('', '<leader><leader>p', ':HopPattern<CR>', { desc = 'Hop to pattern' })
-
 -- Quick file operations
 vim.keymap.set('n', '<leader>w', ':w<CR>', { desc = '[W]rite file' })
 vim.keymap.set('n', '<leader>q', ':q<CR>', { desc = '[Q]uit' })
