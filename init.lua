@@ -80,6 +80,9 @@ local function get_ignore_patterns()
   return ignore_patterns
 end
 
+-- Make function available globally for testing
+_G.get_ignore_patterns = get_ignore_patterns
+
 -- Basic keymaps
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
