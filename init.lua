@@ -128,6 +128,10 @@ require('lazy').setup({
         filters = {
           dotfiles = true,
           custom = get_ignore_patterns(),
+          git_ignored = false, -- Don't filter git ignored files
+        },
+        git = {
+          ignore = false, -- Don't use .gitignore
         },
       })
     end,
@@ -148,7 +152,11 @@ require('lazy').setup({
       local builtin = require('telescope.builtin')
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sf', function()
-        builtin.find_files({ file_ignore_patterns = get_ignore_patterns() })
+        builtin.find_files({
+          file_ignore_patterns = get_ignore_patterns(),
+          no_ignore = true, -- Don't respect .gitignore
+          hidden = true, -- Include hidden files
+        })
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
@@ -233,13 +241,12 @@ require('lazy').setup({
         },
       })
 
-      -- Setup LSP servers
+      -- Setup LSP servers using new Neovim 0.11 API
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
-      local lspconfig = require('lspconfig')
 
-      lspconfig.pyright.setup({
-        capabilities = capabilities,
+      vim.lsp.config('pyright', {
         cmd = { vim.fn.expand('~/.local/share/nvim/mason/bin/pyright-langserver'), '--stdio' },
+        capabilities = capabilities,
         settings = {
           python = {
             analysis = {
@@ -251,11 +258,11 @@ require('lazy').setup({
         },
       })
 
-      lspconfig.lua_ls.setup({
-        capabilities = capabilities,
+      vim.lsp.config('lua_ls', {
         cmd = { vim.fn.expand('~/.local/share/nvim/mason/bin/lua-language-server') },
-          settings = {
-            Lua = {
+        capabilities = capabilities,
+        settings = {
+          Lua = {
             runtime = { version = 'LuaJIT' },
             workspace = { library = vim.api.nvim_get_runtime_file('', true) },
             diagnostics = { globals = { 'vim' } },
