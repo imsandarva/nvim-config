@@ -24,6 +24,118 @@ vim.opt.scrolloff = 10
 vim.opt.termguicolors = true
 vim.g.have_nerd_font = true
 
+-- Custom ignore system for telescope and nvim-tree
+local function get_ignore_patterns()
+  local ignore_patterns = {}
+
+  -- Always ignore binary files
+  local binary_extensions = {
+    'exe', 'dll', 'so', 'dylib', 'app', 'deb', 'rpm', 'zip', 'tar', 'gz', 'bz2', 'xz',
+    '7z', 'rar', 'jar', 'war', 'ear', 'class', 'pyc', 'pyo', 'pyd', 'so', 'o', 'a',
+    'lib', 'dylib', 'framework', 'nib', 'bundle', 'app', 'dmg', 'iso', 'img', 'bin',
+    'dat', 'db', 'sqlite', 'sqlite3', 'mdb', 'accdb', 'pdb', 'ilk', 'exp', 'lib',
+    'a', 'la', 'lo', 'obj', 'suo', 'user', 'aps', 'pch', 'vspscc', 'vssscc',
+    'buildinfo', 'ncb', 'suo', 'tlb', 'tlh', 'tmp', 'temp', 'log', 'vsmdi',
+    'docproj', 'user', 'aps', 'pch', 'vspscc', 'vssscc', 'ncb', 'suo', 'tlb',
+    'tlh', 'tmp', 'temp', 'cache', 'obj', 'ilk', 'exp', 'lib', 'a', 'la', 'lo',
+    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp',
+    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'ico', 'svg', 'webp', 'mp4',
+    'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm', 'mp3', 'wav', 'flac', 'ogg'
+  }
+
+  for _, ext in ipairs(binary_extensions) do
+    table.insert(ignore_patterns, '*.' .. ext)
+  end
+
+  -- Check for .nvimignore file in current or root directory
+  local current_dir = vim.fn.getcwd()
+  local root_patterns = { '.git', 'pyproject.toml', 'setup.py', 'requirements.txt', 'package.json' }
+
+  local project_root = current_dir
+  for _, pattern in ipairs(root_patterns) do
+    local check_path = current_dir .. '/' .. pattern
+    if vim.fn.isdirectory(check_path) == 1 or vim.fn.filereadable(check_path) == 1 then
+      project_root = current_dir
+      break
+    end
+  end
+
+  local nvimignore_path = project_root .. '/.nvimignore'
+  if vim.fn.filereadable(nvimignore_path) == 1 then
+    local lines = vim.fn.readfile(nvimignore_path)
+    for _, line in ipairs(lines) do
+      line = vim.trim(line)
+      if line ~= '' and not vim.startswith(line, '#') then
+        if vim.startswith(line, '/') then
+          -- Absolute path from project root
+          table.insert(ignore_patterns, project_root .. line)
+        else
+          -- Pattern relative to project root
+          table.insert(ignore_patterns, project_root .. '/' .. line)
+        end
+      end
+    end
+  end
+
+  return ignore_patterns
+end
+
+-- Custom ignore system for telescope and nvim-tree
+local function get_ignore_patterns()
+  local ignore_patterns = {}
+
+  -- Always ignore binary files
+  local binary_extensions = {
+    'exe', 'dll', 'so', 'dylib', 'app', 'deb', 'rpm', 'zip', 'tar', 'gz', 'bz2', 'xz',
+    '7z', 'rar', 'jar', 'war', 'ear', 'class', 'pyc', 'pyo', 'pyd', 'so', 'o', 'a',
+    'lib', 'dylib', 'framework', 'nib', 'bundle', 'app', 'dmg', 'iso', 'img', 'bin',
+    'dat', 'db', 'sqlite', 'sqlite3', 'mdb', 'accdb', 'pdb', 'ilk', 'exp', 'lib',
+    'a', 'la', 'lo', 'obj', 'suo', 'user', 'aps', 'pch', 'vspscc', 'vssscc',
+    'buildinfo', 'ncb', 'suo', 'tlb', 'tlh', 'tmp', 'temp', 'log', 'vsmdi',
+    'docproj', 'user', 'aps', 'pch', 'vspscc', 'vssscc', 'ncb', 'suo', 'tlb',
+    'tlh', 'tmp', 'temp', 'cache', 'obj', 'ilk', 'exp', 'lib', 'a', 'la', 'lo',
+    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp',
+    'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'ico', 'svg', 'webp', 'mp4',
+    'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm', 'mp3', 'wav', 'flac', 'ogg'
+  }
+
+  for _, ext in ipairs(binary_extensions) do
+    table.insert(ignore_patterns, '*.' .. ext)
+  end
+
+  -- Check for .nvimignore file in current or root directory
+  local current_dir = vim.fn.getcwd()
+  local root_patterns = { '.git', 'pyproject.toml', 'setup.py', 'requirements.txt', 'package.json' }
+
+  local project_root = current_dir
+  for _, pattern in ipairs(root_patterns) do
+    local check_path = current_dir .. '/' .. pattern
+    if vim.fn.isdirectory(check_path) == 1 or vim.fn.filereadable(check_path) == 1 then
+      project_root = current_dir
+      break
+    end
+  end
+
+  local nvimignore_path = project_root .. '/.nvimignore'
+  if vim.fn.filereadable(nvimignore_path) == 1 then
+    local lines = vim.fn.readfile(nvimignore_path)
+    for _, line in ipairs(lines) do
+      line = vim.trim(line)
+      if line ~= '' and not vim.startswith(line, '#') then
+        if vim.startswith(line, '/') then
+          -- Absolute path from project root
+          table.insert(ignore_patterns, project_root .. line)
+        else
+          -- Pattern relative to project root
+          table.insert(ignore_patterns, project_root .. '/' .. line)
+        end
+      end
+    end
+  end
+
+  return ignore_patterns
+end
+
 -- Basic keymaps
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
