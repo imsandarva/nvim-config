@@ -25,6 +25,7 @@ vim.opt.termguicolors = true
 vim.g.have_nerd_font = true
 
 -- Custom ignore system for telescope and nvim-tree
+-- Only ignores: binary files + .nvimignore patterns (NOT .gitignore)
 local function get_ignore_patterns()
   local ignore_patterns = {}
 
